@@ -2,21 +2,21 @@
 // config.php - simple config without dotenv. Edit values below before deploying.
 
 // ---- MySQL (edit to match your DB on Render or local) ----
-define('DB_HOST', '127.0.0.1');
-define('DB_PORT', '3306');
-define('DB_NAME', 'clothing_bot');
-define('DB_USER', 'root');
-define('DB_PASS', '');
+define('DB_HOST', getenv('DB_HOST'));
+define('DB_PORT', getenv('3306'));
+define('DB_NAME', getenv('DB_NAME'));
+define('DB_USER', getenv('DB_USER'));
+define('DB_PASS', getenv('DB_PASS'));
 
 // ---- Public base URL (used to build image URLs if needed) ----
-define('BASE_URL', 'https://your-public-domain.com'); // set to your Render service URL
+define('BASE_URL', 'https://custom-clothing-chatbot.onrender.com'); 
 
 // ---- Twilio WhatsApp number (used for reference only) ----
-define('TWILIO_WHATSAPP_NUMBER', 'whatsapp:+1415XXXXXXX');
+define('TWILIO_WHATSAPP_NUMBER', 'whatsapp:+14155238886');
 
 // ---- RapidAPI GPT-5 settings ----
 define('RAPIDAPI_HOST', 'chat-gpt26.p.rapidapi.com');
-define('RAPIDAPI_KEY', 'YOUR_API_KEY_HERE'); // replace when ready
+define('RAPIDAPI_KEY', getenv('RAPIDAPI_KEY'));
 
 // ---- Optional OpenAI (for image generation) ----
 define('USE_OPENAI_IMAGE', false);
