@@ -1,6 +1,6 @@
 <?php
 // webhook.php - Twilio WhatsApp webhook (uses RapidAPI GPT-5 chat for replies)
-// Minimal, ready-to-deploy version. Edit config.php to add your keys before deploying.
+// Fully safe TwiML version
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers.php';
@@ -13,6 +13,7 @@ $numMedia = intval($_POST['NumMedia'] ?? 0);
 $mediaUrl = $numMedia > 0 ? ($_POST['MediaUrl0'] ?? null) : null;
 
 if (!$from) {
+    echo '<?xml version="1.0" encoding="UTF-8"?>';
     echo "<Response><Message>Missing From number.</Message></Response>";
     exit;
 }
@@ -45,14 +46,14 @@ if (!$state) {
     $user_input = $body;
 }
 
-// Handle media uploaded now: update context and order immediately
+// Handle uploaded image
 if ($mediaUrl) {
     $context['fields']['design_image_url'] = $mediaUrl;
     update_order($order_id, ['design_image_url' => $mediaUrl]);
     $user_input .= "\n[media uploaded: $mediaUrl]";
 }
 
-// System prompt instructs the model to respond with JSON only
+// --- AI SYSTEM PROMPT ---
 $system_prompt = <<<'SYS'
 You are CustomClothBot — a WhatsApp assistant that collects custom clothing orders.
 RESPOND with valid JSON only (no extra text) using these keys:
@@ -74,23 +75,26 @@ $messages = [
     ["role"=>"user", "content"=>$user_input]
 ];
 
+// --- CALL AI ---
 $ai_text = call_rapidapi_chat($messages);
 if ($ai_text === null) {
     $fallback = "Sorry — AI service unavailable right now.";
-    echo "<Response><Message>$fallback</Message></Response>";
+    echo '<?xml version="1.0" encoding="UTF-8"?>';
+    echo "<Response><Message>" . htmlspecialchars($fallback, ENT_XML1, 'UTF-8') . "</Message></Response>";
     exit;
 }
 
-// Parse JSON from AI
+// --- PARSE JSON ---
 $parsed = json_decode($ai_text, true);
 if (!$parsed) {
-    // save last exchange for debugging and respond politely
     set_state($from, $order_id, json_encode($context), $user_input, $ai_text);
     $err = "Sorry, I couldn't understand the AI reply. Please try again.";
-    echo "<Response><Message>$err</Message></Response>";
+    echo '<?xml version="1.0" encoding="UTF-8"?>';
+    echo "<Response><Message>" . htmlspecialchars($err, ENT_XML1, 'UTF-8') . "</Message></Response>";
     exit;
 }
 
+// --- SAVE FIELDS ---
 $fields = $parsed['fields'] ?? [];
 if (!empty($fields)) {
     $db_update = [];
@@ -101,45 +105,47 @@ if (!empty($fields)) {
     $context['fields'] = $fields;
 }
 
-// Save state
+// --- SAVE STATE ---
 set_state($from, $order_id, json_encode($context), $user_input, $ai_text);
 
-// Handle actions
+// --- HANDLE ACTION ---
 $action = $parsed['action'] ?? 'ask';
-$reply = $parsed['reply'] ?? "Sorry, I couldn't understand that.";
+$reply = trim($parsed['reply'] ?? "Sorry, I couldn't understand that.");
+
+echo '<?xml version="1.0" encoding="UTF-8"?>';
 
 if ($action === 'generate_preview') {
     $image_prompt = $parsed['image_prompt'] ?? null;
     $preview_url = null;
-    if ($image_prompt && USE_OPENAI_IMAGE && OPENAI_API_KEY) {
+
+    if ($image_prompt && defined('USE_OPENAI_IMAGE') && USE_OPENAI_IMAGE && defined('OPENAI_API_KEY') && OPENAI_API_KEY) {
         $b64orurl = call_openai_image($image_prompt);
         if ($b64orurl) {
             $preview_url = save_base64_image($b64orurl, 'preview');
         }
     }
+
     if (!$preview_url) {
         $txt = urlencode(($fields['size'] ?? 'M') . ' ' . ($fields['color'] ?? 'black') . ' ' . ($fields['clothing_type'] ?? 'dress'));
         $preview_url = "https://via.placeholder.com/512x768.png?text={$txt}";
     }
+
     update_order($order_id, ['preview_image_url' => $preview_url]);
-    $twiml = "<Response><Message><Body>" . htmlspecialchars($reply) . "</Body><Media>" . htmlspecialchars($preview_url) . "</Media></Message></Response>";
-    echo $twiml;
+
+    echo "<Response><Message><Body>" . htmlspecialchars($reply, ENT_XML1, 'UTF-8') . "</Body><Media>" . htmlspecialchars($preview_url, ENT_XML1, 'UTF-8') . "</Media></Message></Response>";
     exit;
 }
 
-if ($action === 'confirm' || $action === 'ask' || $action === 'wait_image') {
-    echo "<Response><Message>" . htmlspecialchars($reply) . "</Message></Response>";
+if (in_array($action, ['confirm', 'ask', 'wait_image', 'done'])) {
+    if ($action === 'done') {
+        update_order($order_id, ['status' => 'pending_price']);
+        clear_state($from);
+    }
+    echo "<Response><Message>" . htmlspecialchars($reply, ENT_XML1, 'UTF-8') . "</Message></Response>";
     exit;
 }
 
-if ($action === 'done') {
-    update_order($order_id, ['status' => 'pending_price']);
-    clear_state($from);
-    echo "<Response><Message>" . htmlspecialchars($reply) . "</Message></Response>";
-    exit;
-}
-
-// fallback
-echo "<Response><Message>" . htmlspecialchars($reply) . "</Message></Response>";
+// --- FALLBACK ---
+echo "<Response><Message>" . htmlspecialchars($reply, ENT_XML1, 'UTF-8') . "</Message></Response>";
 exit;
 ?>
