@@ -6,6 +6,10 @@ require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers.php';
 
 header('Content-Type: application/xml; charset=utf-8');
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+error_log("Webhook loaded successfully");
 
 // Step 1: Log raw incoming Twilio POST
 log_step('Webhook received', $_POST);
