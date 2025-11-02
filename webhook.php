@@ -15,8 +15,8 @@ error_log("Webhook loaded successfully");
 log_step('Webhook received', $_POST);
 
 // --- Extract WhatsApp message details ---
-$from = $_POST['From'] ?? '';
-$body = trim($_POST['Body'] ?? '');
+$from = $_POST['From'] ?? 'test';
+$body = trim($_POST['Body'] ?? 'test');
 $numMedia = intval($_POST['NumMedia'] ?? 0);
 $mediaUrl = $numMedia > 0 ? ($_POST['MediaUrl0'] ?? null) : null;
 
