@@ -178,3 +178,12 @@ function clear_state($phone) {
     $stmt->execute([$phone]);
     log_step("Clear State", ["phone" => $phone]);
 }
+
+function log_webhook_message($from, $body, $numMedia, $mediaUrl) {
+    $db = get_db();
+    $stmt = $db->prepare("
+        INSERT INTO webhook_logs (phone, message, num_media, media_url)
+        VALUES (?, ?, ?, ?)
+    ");
+    $stmt->execute([$from, $body, $numMedia, $mediaUrl]);
+}
