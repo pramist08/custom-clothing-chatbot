@@ -15,6 +15,11 @@ $from = $_POST['From'] ?? '';
 $body = trim($_POST['Body'] ?? '');
 $numMedia = intval($_POST['NumMedia'] ?? 0);
 $mediaUrl = $numMedia > 0 ? ($_POST['MediaUrl0'] ?? null) : null;
+echo $from."</br>";
+echo $body."</br>";
+echo $numMedia."</br>";
+echo $mediaUrl."</br>";die;
+
 
 log_step('Parsed incoming data', [
     'from' => $from,
