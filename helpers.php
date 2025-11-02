@@ -3,7 +3,7 @@
 require_once __DIR__ . '/config.php';
 
 // ---------- Logging Setup ----------
-define('LOG_FILE', __DIR__ . '/bot1.log');
+define('LOG_FILE', __DIR__ . '/errorlog.txt');
 
 /**
  * Write a log entry with a timestamp and optional data.
