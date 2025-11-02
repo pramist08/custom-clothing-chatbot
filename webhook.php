@@ -20,6 +20,8 @@ $body = trim($_POST['Body'] ?? '');
 $numMedia = intval($_POST['NumMedia'] ?? 0);
 $mediaUrl = $numMedia > 0 ? ($_POST['MediaUrl0'] ?? null) : null;
 
+log_webhook_message($from, $body, $numMedia, $mediaUrl);
+
 
 
 log_step('Parsed incoming data', [
