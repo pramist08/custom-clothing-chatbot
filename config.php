@@ -1,6 +1,12 @@
 <?php
 // config.php - simple config without dotenv. Edit values below before deploying.
-
+echo "<pre>";
+echo "DB_HOST: " . getenv('DB_HOST') . "\n";
+echo "DB_PORT: " . '3306' . "\n";
+echo "DB_NAME: " . getenv('DB_NAME') . "\n";
+echo "DB_USER: " . getenv('DB_USER') . "\n";
+echo "DB_PASS: " . getenv('DB_PASS') . "\n";
+echo "</pre>";
 // ---- MySQL (edit to match your DB on Render or local) ----
 define('DB_HOST', getenv('DB_HOST'));
 define('DB_PORT', '3306');
